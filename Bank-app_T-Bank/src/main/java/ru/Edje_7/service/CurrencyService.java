@@ -3,8 +3,8 @@ package ru.Edje_7.service;
 
 import org.springframework.stereotype.Service;
 import ru.Edje_7.model.Currency;
+import ru.Edje_7.repository.CurrencyRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,29 +12,30 @@ import java.util.UUID;
 @Service
 public class CurrencyService {
 
-    private final List<Currency> currencies = new ArrayList<>();
+    private CurrencyRepository currencyRepository;
+
+    public CurrencyService(CurrencyRepository currencyRepository) {
+        this.currencyRepository = currencyRepository;
+    }
 
     public List<Currency> getCurrencies(){
-        return currencies;
+        return currencyRepository.findAll();
     }
 
     public Currency addCurrency(Currency currency){
-        for(Currency currency1 : currencies){
-            if(currency1.getId().equals(currency.getId())){
+        for(Currency searchCurrency : getCurrencies()){
+            if(searchCurrency.getId().equals(currency.getId())){
                 return currency;
             }
         }
         String id = UUID.randomUUID().toString();
         currency.setId(id);
-        currencies.add(currency);
-        return currency;
+        return currencyRepository.save(currency);
     }
 
     public Currency getCurrencyById(String id){
-        return currencies.stream()
-                .filter(currency -> currency.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException(("Валюта не найдена с ID:" + id)));
+        return currencyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Не найдена валюта с ID:" + id));
     }
 
     public Currency updateCurrency(String id, Currency currency){
@@ -43,11 +44,11 @@ public class CurrencyService {
         updatedCurrency.setBaseCurrency(currency.getBaseCurrency());
         updatedCurrency.setPriceChangeRange(currency.getPriceChangeRange());
         updatedCurrency.setDescription(currency.getDescription());
-        return updatedCurrency;
+        return currencyRepository.save(updatedCurrency);
     }
 
     public void deleteCurrencyById(String id){
-            currencies.remove(getCurrencyById(id));
+        currencyRepository.deleteById(id);
     }
 
 
